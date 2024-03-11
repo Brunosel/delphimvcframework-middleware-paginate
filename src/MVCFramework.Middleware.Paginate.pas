@@ -64,7 +64,8 @@ procedure TMVCPaginateMiddleware.OnAfterRouting(AContext: TWebContext; const AHa
 var
   LLimit, LPage: string;
   LPages: Double;
-  LJsonArray, LResultsJsonArray: TJSONArray;
+  LJsonValue: TJSONValue;
+  LResultsJsonArray: TJSONArray;
   LJsonObjectResponse: TJSONObject;
 begin
   if (AContext.Response.RawWebResponse.ContentStream = nil) then
@@ -85,21 +86,21 @@ begin
     else
       LPage := AContext.Request.QueryStringParam('page');
 
-    LJsonArray := TJSONArray.ParseJSONValue(TEncoding.UTF8.GetBytes((AContext.Response.RawWebResponse.ContentStream as TStringStream).DataString), 0) as TJSONArray;
-    if Assigned(LJsonArray) then
+    LJsonValue := TJSONValue.ParseJSONValue(TEncoding.UTF8.GetBytes((AContext.Response.RawWebResponse.ContentStream as TStringStream).DataString), 0) as TJSONValue;
+    if (Assigned(LJsonValue)) and (LJsonValue is TJSONArray) then
     begin
-      LPages := Ceil(LJsonArray.Count / LLimit.ToInteger);
+      LPages := Ceil((LJsonValue as TJSONArray).Count / LLimit.ToInteger);
 
       LResultsJsonArray := TJsonArray.Create;
       for var I := (LLimit.ToInteger * (LPage.ToInteger - 1)) to ((LLimit.ToInteger * LPage.ToInteger)) - 1 do
       begin
-        if I < LJsonArray.Count then
-          LResultsJsonArray.AddElement(LJsonArray.Items[I].Clone as TJSONValue);
+        if I < (LJsonValue as TJSONArray).Count then
+          LResultsJsonArray.AddElement((LJsonValue as TJSONArray).Items[I].Clone as TJSONValue);
       end;
 
       LJsonObjectResponse := TJsonObject.Create;
       LJsonObjectResponse.AddPair('results', LResultsJsonArray);
-      LJsonObjectResponse.AddPair('total', TJSONNumber.Create(LJsonArray.Count));
+      LJsonObjectResponse.AddPair('total', TJSONNumber.Create((LJsonValue as TJSONArray).Count));
       LJsonObjectResponse.AddPair('limit', TJSONNumber.Create(LLimit.ToInteger));
       LJsonObjectResponse.AddPair('page',  TJSONNumber.Create(LPage.ToInteger));
       LJsonObjectResponse.AddPair('pages', TJSONNumber.Create(LPages));

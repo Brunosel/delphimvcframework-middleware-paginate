@@ -11,6 +11,8 @@ This middleware is designed to work with [Delphi MVC Framework](https://github.c
 
 To use this middleware, enable it calling **MVCEngine.AddMiddleware(TMVCPaginateMiddleware.Create)** 
 
+Pagination middleware must be before Compression, if present.
+
 To activate pagination in your response you need to pass a header in your request:
 
 X-Paginate = true;
